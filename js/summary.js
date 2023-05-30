@@ -1,5 +1,6 @@
 let urgent_tasks = [];
 let mediaQuery = window.matchMedia('(max-width: 800px)');
+let token;
 
 
 /**
@@ -9,12 +10,14 @@ let mediaQuery = window.matchMedia('(max-width: 800px)');
 
 /**function that fetches tasks from backend and creates a Json */
 async function initSum() {
+  token=sessionStorage.getItem('Token')
   await includeHTML();
-  all_tasksAsText=await fetch("https://kbl98.pythonanywhere.com/tasks",{
-    headers: {'Authorization': 'Token 99e010410feedbe8a7504c05fdf85a7b55499c0f'},
-    mode: 'no-cors'
-  });
-   console.log(all_tasksAsText)
+  all_tasksAsText=await fetch('http://127.0.0.1:8000/tasks',{
+    headers: {'Authorization': 'Token '+token},
+    mode: 'cors'
+  }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
+  all_tasks=all_tasksAsText['body']
+  console.log(all_tasksAsText['body']);
 
  
    
@@ -275,7 +278,7 @@ function generateUrgentOverHTML(){
  */
 function formateDate(tasks) {
   for (let i = 0; i < all_tasks.length; i++) {
-    let [day, mo, ye] = tasks[i]["date"].split("/");
+    let [ye, mo, day] = tasks[i]["date"].split("-");
     let d = new Date(+ye, +mo-1, +day);
     tasks[i]["date"] = d;
   }

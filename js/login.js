@@ -46,7 +46,7 @@ async function getLogin() {
  */
 async function setBackend() {
   setURL(
-    "https://kbl-developement.de/smallest_backend_ever-master"
+    'https://kbl98.pythonanywhere.com/register/'
   );
 }
 
@@ -69,20 +69,17 @@ function showLogin() {
  * function to get all registrated Users and Contacts from storage 
  */
 async function getUsers() {
-  await setBackend();
-  await downloadFromServer();
-  users = JSON.parse(backend.getItem("users")) || [];
-  loadedContacts = JSON.parse(backend.getItem("contacts")) || [];
+ /*Funktion for getting users from server here */
+  
+  loadedContacts =  [];
   
 }
 
 function remberValueInLogin(){
   rememberToForm();
   let email=getJustRegistratedEmail();
-  let pw=getJustRegistratedPW();
-  if(pw){
+  if(email){
     document.getElementById("mail-login").value=email;
-    document.getElementById("password-login").value=pw;
     removeJustRegistrated();
   }
 }
@@ -91,20 +88,41 @@ function remberValueInLogin(){
  * function to find the logged User 
 */
 async function getCurrentUser() {
-  let logname = document.getElementById("mail-login");
-  let logpassword = document.getElementById("password-login");
-  current_user = users.find(
-    (u) => u.password == logpassword.value && u.email == logname.value
-  );
+  let email = document.getElementById("mail-login").value;
+  let password = document.getElementById("password-login").value;
+  let response=await checkLoginBackend(email,password);
+  let json=await response.json();
+  console.log(json.token)
+  sessionStorage.setItem("Token",json.token);
+  current_user={
+    username: json.username,
+    email: json.email,
+    color:json.color
+  }
   if (!current_user) {
     tryOneMore();
   } else {
     removeTrys();
     setCurrentUserToLocal(current_user);
     deleteRemember();
-    checkRemember(logname.value,logpassword.value);
+    checkRemember(email,password);
     window.location.href = "summary.html";
   }
+}
+
+async function checkLoginBackend(email,password){
+  let body=JSON.stringify({
+    'email':email,
+    'password':password
+  })
+  let response=await fetch('http://127.0.0.1:8000/login/', {
+    method: "POST",  
+    headers: { 'Accept': 'application/json, text/plain, */*',
+    'Content-Type': 'application/json'},
+    body: body,
+    mode:'cors'
+  });
+  return response
 }
 
 /**function to reset value of loginfields */
@@ -181,47 +199,58 @@ function getDemoSummary() {
  * function to registrate as new User 
  */
 async function sign() {
+  let newUser;
   let username = document.getElementById("name-registration").value;
   let email = document.getElementById("mail-registration").value;
   let password = document.getElementById("password-registration").value;
   let color=getRandomColor();
-  let newUser = {username: username,email: email,password: password,color:color};
-  let isNewUser = await checknewUser(newUser);
-  if (isNewUser) {
-    await saveUser(newUser);
-    let isNewContact=await checkifContact(newUser)
-    if(isNewContact){
-    await createNewContactFromUser(newUser)
-    }
-    registrateToBackend(password,email,username)
-    cleanValue(username,email,password);
-    setJustRegistratedToSessStore(newUser)
-    window.location.href = "login.html";
-  } else {
+  let answerFromBackend=await registrateToBackend(password,email,username,color);
+  
+  let json = await answerFromBackend.json();
+  console.log(json)
+ 
+  let message=json;
+  cleanValue(username,email,password);
+  if(message.message){
     openPopup();
   }
+  else{
+    newUser={'username':message.username,'email':message.email,'color':message.color}
+  }
+  cleanValue(username,email,password);
+  setJustRegistratedToSessStore(newUser)
+  window.location.href = "login.html";
+  /*} else {
+    openPopup();
+  }*/
 }
 
-async function registrateToBackend(password, email, username) {
+async function registrateToBackend(password, email, username,color) {
   const url = "https://kbl98.pythonanywhere.com/register/";
   const headers = {
     "Content-Type": "application/json"
   };
 
-  const body = {
-    "password": password,
-    "email": email,
-    "username": username,
-  };
+  const body = JSON.stringify({
+    password: password,
+    email: email,
+    username: username,
+    color:color
+  });
   console.log(body)
   try {
-    const response = await fetch(url, {
-      headers: headers,
-      method: "POST",
+    
+   
+  let response = await fetch(" http://127.0.0.1:8000/register/", {
+      method: "POST",  
+      headers: { 'Accept': 'application/json, text/plain, */*',
+      'Content-Type': 'application/json',},
       body: body,
+      mode:'cors'
     });
 
-    console.log(response);
+   return response
+
   } catch (error) {
     console.error(error);
   }
@@ -241,13 +270,11 @@ function cleanValue(username,email,password){
  */
 function setJustRegistratedToSessStore(newUser){
   sessionStorage.setItem("just_reg_email",newUser["email"]);
-  sessionStorage.setItem("just_reg_pw",newUser["password"]);
 }
 
 
 function removeJustRegistrated(){
   sessionStorage.removeItem("just_reg_email");
-  sessionStorage.removeItem("just_reg_pw");
 }
 
 
@@ -318,7 +345,7 @@ async function createNewContactFromUser(newUser) {
     let color = newUser["color"];
     let newObjekt = { name: newName, email: newMail, phone: newPhone, color: color};
     loadedContacts.push(newObjekt);
-    await saveContactsToBackend();
+    /*save new user to contacts at backend*/
 }
 
 
@@ -340,9 +367,9 @@ function getRandomColor() {
  * function saves all contacts to backend
  */
 async function saveContactsToBackend() {
-    await downloadFromServer();
+    
     let contactAsText = JSON.stringify(loadedContacts);
-    await backend.setItem("contacts", contactAsText);
+   
 }
 
 
@@ -368,8 +395,7 @@ async function saveUsers() {
 async function saveUser(newUser) {
   users.push(newUser);
   let usersAsText = JSON.stringify(users);
-  await downloadFromServer();
-  await backend.setItem("users", usersAsText);
+  ;
 }
 
 
