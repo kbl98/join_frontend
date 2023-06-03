@@ -35,7 +35,8 @@ function dragStart(id) {
 async function drop(progress) {
     loadedBoard[currentDragElement]['progress'] = progress;
     renderBoard();
-    await boardSaveToBackend()
+    console.log(currentDragElement)
+    await boardSaveToBackend(currentDragElement)
 }
 
 
@@ -46,16 +47,32 @@ function allowDrop(ev) {
 
 
 // load and upload to backend
-async function boardSaveToBackend() {
-    await downloadFromServer();
-    let JSONAsText = JSON.stringify(loadedBoard);
-    await backend.setItem("all_tasks", JSONAsText);
+async function boardSaveToBackend(index) {
+    let id=findId(index);
+    console.log(loadedBoard[index])
+    body=JSON.stringify(loadedBoard[index])
+    let saveResponse=await fetch('http://127.0.0.1:8000/tasks/'+id+'/',{
+        method: "PATCH",  
+        headers: { 'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json'},
+        body: body,
+        mode:'cors'
+      })
+    console.log(saveResponse.json())
+    //await downloadFromServer();
+    //let JSONAsText = JSON.stringify(loadedBoard);
+    //await backend.setItem("all_tasks", JSONAsText);
 }
 
 
 async function loadAllTaskFromBackend() {
-    await downloadFromServer();
-    loadedBoard = JSON.parse(backend.getItem("all_tasks"));
+    token=sessionStorage.getItem('Token')
+    all_tasksAsText=await fetch('http://127.0.0.1:8000/tasks/',{
+    headers: {'Authorization': 'Token '+token},
+    mode: 'cors'
+  }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
+  loadedBoard=all_tasksAsText['body']
+  console.log(all_tasksAsText['body']);
     if (!loadedBoard) {
         loadedBoard = [];
     };
@@ -63,8 +80,13 @@ async function loadAllTaskFromBackend() {
 
 
 async function loadContactsFromBackend() {
-    await downloadFromServer();
-    loadedContacts = JSON.parse(backend.getItem("contacts"));
+    token=sessionStorage.getItem('Token')
+    allContactsAsText=await fetch('http://127.0.0.1:8000/contacts/',{
+    headers: {'Authorization': 'Token '+token},
+    mode: 'cors'
+    }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
+    loadedContacts=allContactsAsText['body']
+    console.log(allContactsAsText['body']);
     if (!loadedContacts) {
         loadedContacts = [];
     };
@@ -281,14 +303,40 @@ async function editPopupTask(title, description, date, index) {
  */
 async function saveEditPopupBoard(index) {
     let { titleValue, descriptionValue, dateValue, prioValue, assignedToValue } = getnewValuesFromEdit();
-    loadedBoard[index].title = titleValue;
-    loadedBoard[index].description = descriptionValue;
-    loadedBoard[index].contactNames = assignedToValue;
-    loadedBoard[index].date = dateValue;
-    loadedBoard[index].prio = prioValue;
-    await boardSaveToBackend();
+    console.log(index)
+    let id=findId(index)
+    console.log(id)
+    let contactnames={};
+    for (let i=0;i<assignedToValue.length;i++){
+        contactnames[i]={'name':assignedToValue[i]}
+    }
+    let dateArray=dateValue.split("/");
+    dateValue=dateArray[2]+"-"+dateArray[1]+"-"+dateArray[0];
+    
+    let body=JSON.stringify({
+        'title':titleValue,
+        'description':descriptionValue,
+        'contactsnames':contactnames,
+        'date':dateValue,
+        'prio':prioValue
+    })
+    console.log(body)
+    let saveResponse=await fetch('http://127.0.0.1:8000/tasks/'+id+'/',{
+        method: "PATCH",  
+        headers: { 'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json'},
+        body: body,
+        mode:'cors'
+      })
+    console.log(saveResponse.json())
     closeEditedTask();
     initBoard();
+}
+
+function findId(index){
+    console.log(loadedBoard)
+   let id=loadedBoard[index]['id']
+   return id
 }
 
 
@@ -340,8 +388,10 @@ function closeAddTaskBoard() {
  */
 function addContactLoop(index) {
     let contacts = loadedBoard[index]['contactNames'];
+    console.log(contacts)
     for (let i = 0; i < contacts.length; i++) {
-        let contact = loadedBoard[index]['contactNames'][i];
+        let contact = loadedBoard[index]['contactNames'][i]['name'];
+        console.log(contact)
         let contactId = getContactId(contact);
         addContactBoard(contactId);
     }
@@ -354,7 +404,9 @@ function addContactLoop(index) {
  * @param {number} i - number to get the correct contact
  */
 function addContactBoard(i) {
+    console.log(i)
     let contactID = document.getElementById('contact' + i);
+    console.log(selectedContactNames)
     let index = selectedContactNames.indexOf(contactID.innerHTML);
     let index2 = selectedLetters.findIndex(obj => obj.bothLetters == firstLetters[i]['bothLetters']);
     if (index > -1) {
@@ -384,10 +436,14 @@ function resetSelectBoard(index, index2, i) {
 
 function getContactId(contact) {
     let contactId;
+   console.log(allContacts)
     for (let i = 0; i < allContacts.length; i++) {
-        let currentContact = allContacts[i].name;
-        if (currentContact.includes(contact)) {
+        let currentContact = allContacts[i]['name'];
+        console.log(currentContact)
+        console.log(contact)
+        if (currentContact==contact) {
             contactId = i
+            console.log(i)
             break;
         }
     }
@@ -462,19 +518,41 @@ async function createTaskBoard(param) {
         param = 'todo'
     }
     addDate();
+    let subtasks=[];
+    let contacts=[];
+    for (let i=0;i<selectedContactNames.length;i++){
+        contacts.push({'name':selectedContactNames[i]})
+    }
+    console.log(selectedSubtasks)
+    for (let i=0;i<selectedSubtasks.length;i++){
+        console.log(selectedSubtasks[i])
+        subtasks.push({'name':selectedSubtasks[i]['name']})
+    }
+    let dateArray=selectedDate.split("/");
+    dateValue=dateArray[2]+"-"+dateArray[1]+"-"+dateArray[0];
     let jsonObj = {
         title: selectedTitle,
         description: selectedDescription,
         category: selectedCategory,
         color: selectedColor,
-        contactNames: selectedContactNames,
-        date: selectedDate,
+        contactNames: contacts,
+        date: dateValue,
         prio: selectedPrio,
-        subtasks: selectedSubtasks,
+        subtasks: subtasks,
         progress: param
     };
-    loadedBoard.push(jsonObj);
-    await boardSaveToBackend();
+    console.log(jsonObj)
+    body=JSON.stringify(jsonObj);
+    let response=await fetch('http://127.0.0.1:8000/tasks/',{
+        method: "POST",  
+        headers: { 'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json'},
+        body: body,
+        mode:'cors'
+      })
+    console.log(response)
+    //Neue Task!!
+    //await boardSaveToBackend(all_tasks.length);
     clearTask();
     closeAddTaskBoard();
     showDivWithTransition();
@@ -559,13 +637,22 @@ function getTaskInfos(task) {
     let description = task['description'];
     let date = task['date'];
     let priority = task['prio'];
-    let assignedTo = task['contactNames'];
+    let assignedTo = getListAssignedto(task)
     let assignedToLength = task['contactNames'].length;
     return { color, category, title, description, date, priority, assignedTo, assignedToLength };
 }
 
+function getListAssignedto(task){
+    let assignedTo=[];
+    for (let i=0;i<task['contactNames'].length;i++){
+        assignedTo.push(task['contactNames'][i]['name'])
+        }
+    return assignedTo
+}
+
 
 function splitName(fullName) {
+    console.log(fullName)
     let nameParts = fullName.split(" ");
     let firstName = nameParts[0];
     let lastName = nameParts[nameParts.length - 1];
@@ -640,7 +727,7 @@ function openBoardTaskTemp(color, category, title, description, date, priority, 
     return `
     <div class="cont-popup-board-task"  onclick="event.stopPropagation()">
         <!--buttons-->
-        <img onclick="saveOpenedTask()" class="popup-close" src="./assets/img/board_popup_close.png" alt="">
+        <img onclick="saveOpenedTask('${index}')" class="popup-close" src="./assets/img/board_popup_close.png" alt="">
        
         <button onclick="editPopupTask('${title}', '${description}', '${date}', '${index}')" class="popup-edit-button"><img src="./assets/img/board_popup_edit.png"
                 alt=""></button>
@@ -689,16 +776,29 @@ function openTaskAssignedToTemp(contact, bothFirstLetters, nameColor) {
  */
 
 async function deleteTask() {
+    console.log(currentDragElement)
+    id=findId(currentDragElement);
+    let saveResponse=await fetch('http://127.0.0.1:8000/tasks/'+id+'/',{
+        method: "DELETE",  
+        headers: { 'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json'},
+        mode:'cors'
+      })
+    console.log(saveResponse)
+    //loadedBoard.splice(currentDragElement, 1);
     loadedBoard.splice(currentDragElement, 1);
     renderBoard();
-    await boardSaveToBackend();
+    
+    
 }
 
 
 /**function calculate subtasks */
 
 function showProgressSubtasks(task,index){
+    console.log(task["subtasks"])
     let number_subtasks=task["subtasks"].length;
+    console.log(number_subtasks)
     if(number_subtasks>0){
     let array_done_subt=task["subtasks"].filter((s)=>s["state"]=="done");
     let numb_done=array_done_subt.length;
@@ -748,11 +848,12 @@ function checkSubtask(index,i){
     }else{
         loadedBoard[index]["subtasks"][i]["state"]="todo";
     }
+
 }
 
 
-async function saveOpenedTask(){
-    await boardSaveToBackend();
+async function saveOpenedTask(index){
+    await boardSaveToBackend(index);
     closeBoardTask();
     initBoard();
 }

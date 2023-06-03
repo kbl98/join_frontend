@@ -30,9 +30,14 @@ function getLocalCurrentUser() {
  * function to load all tasks which are saved on the server
  */
 async function loadTasks() {
-  setURL('https://kbl-developement.de/smallest_backend_ever-master');
-  await downloadFromServer();
-  all_tasks = JSON.parse(backend.getItem('all_tasks')) || [];
+  token=sessionStorage.getItem('Token')
+    all_tasksAsText=await fetch('http://127.0.0.1:8000/tasks/',{
+    headers: {'Authorization': 'Token '+token},
+    mode: 'cors'
+  }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
+  all_tasks=all_tasksAsText['body'] || []
+  console.log(all_tasksAsText['body']);
+  
 }
 
 

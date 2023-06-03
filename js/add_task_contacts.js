@@ -4,8 +4,13 @@ let firstLetters = [];
 let selectedLetters = [];
 
 async function loadContacts() {
-  await downloadFromServer();
-  allContacts = JSON.parse(backend.getItem("contacts")) || [];
+  token=sessionStorage.getItem('Token')
+    allContactsAsText=await fetch('http://127.0.0.1:8000/contacts/',{
+    headers: {'Authorization': 'Token '+token},
+    mode: 'cors'
+  }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
+  allContacts=allContactsAsText['body'] || []
+  console.log(allContactsAsText['body']);
   sortAllContacts();
   getFirstLetters();
 }
@@ -31,6 +36,7 @@ function getFirstLetters() {
 function renderAllContacts() {
   for (let i = 0; i < allContacts.length; i++) {
     const contact = allContacts[i]["name"];
+    console.log(contact)
     document.getElementById("openedContacts").innerHTML += `
     <div class="oneContact" onclick="addContact(${i})">
       <div id="contact${i}">${contact}</div>
