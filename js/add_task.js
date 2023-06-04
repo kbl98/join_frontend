@@ -47,6 +47,7 @@ async function loadTasks() {
 async function saveAllTasks(task) {
   token=sessionStorage.getItem('Token')
   all_tasks.push(task);
+  console.log(task)
   body=JSON.stringify(task);
   let response=await fetch('http://127.0.0.1:8000/tasks/',{
         method: "POST",  

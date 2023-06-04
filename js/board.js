@@ -5,7 +5,6 @@ let allradySet = false;
 
 
 async function initBoard() {
-    setURL('https://kbl-developement.de/smallest_backend_ever-master');
     await loadAllTaskFromBackend();
     await loadContactsFromBackend();
     await getCurrentUserFromStorage();
@@ -301,17 +300,17 @@ async function editPopupTask(title, description, date, index) {
 async function saveEditPopupBoard(index) {
     let { titleValue, descriptionValue, dateValue, prioValue, assignedToValue } = getnewValuesFromEdit();
     let id=findId(index);
-    let contactnames={};
+    let contactnames=[];
     for (let i=0;i<assignedToValue.length;i++){
-        contactnames[i]={'name':assignedToValue[i]}
+        contactnames.push({'name':assignedToValue[i]})
     }
-    let dateArray=dateValue.split("/");
-    dateValue=dateArray[2]+"-"+dateArray[1]+"-"+dateArray[0];
+    //let dateArray=dateValue.split("/");
+    //dateValue=dateArray[2]+"-"+dateArray[1]+"-"+dateArray[0];
     token=sessionStorage.getItem('Token')
     let body=JSON.stringify({
         'title':titleValue,
         'description':descriptionValue,
-        'contactsnames':contactnames,
+        'contactNames':contactnames,
         'date':dateValue,
         'prio':prioValue
     })
@@ -510,15 +509,14 @@ async function createTaskBoard(param) {
     for (let i=0;i<selectedSubtasks.length;i++){
         subtasks.push({'name':selectedSubtasks[i]['name']})
     }
-    let dateArray=selectedDate.split("/");
-    dateValue=dateArray[2]+"-"+dateArray[1]+"-"+dateArray[0];
+    
     let jsonObj = {
         title: selectedTitle,
         description: selectedDescription,
         category: selectedCategory,
         color: selectedColor,
         contactNames: contacts,
-        date: dateValue,
+        date: selectedDate,
         prio: selectedPrio,
         subtasks: subtasks,
         progress: param
