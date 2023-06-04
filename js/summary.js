@@ -17,16 +17,6 @@ async function initSum() {
     mode: 'cors'
   }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
   all_tasks=all_tasksAsText['body']
-  console.log(all_tasksAsText['body']);
-
- 
-   
-  /*setURL(
-    "https://kbl-developement.de/smallest_backend_ever-master"
-  );
-  await downloadFromServer();
-  console.log("OK");
-  all_tasks = JSON.parse(backend.getItem("all_tasks"));*/
   if (!all_tasks) {
     all_tasks = [];
   } else {

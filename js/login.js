@@ -92,7 +92,6 @@ async function getCurrentUser() {
   let password = document.getElementById("password-login").value;
   let response=await checkLoginBackend(email,password);
   let json=await response.json();
-  console.log(json.token)
   sessionStorage.setItem("Token",json.token);
   current_user={
     username: json.username,
@@ -205,10 +204,7 @@ async function sign() {
   let password = document.getElementById("password-registration").value;
   let color=getRandomColor();
   let answerFromBackend=await registrateToBackend(password,email,username,color);
-  
   let json = await answerFromBackend.json();
-  console.log(json)
- 
   let message=json;
   cleanValue(username,email,password);
   if(message.message){
@@ -237,7 +233,6 @@ async function registrateToBackend(password, email, username,color) {
     username: username,
     color:color
   });
-  console.log(body)
   try {
     
    
@@ -248,7 +243,7 @@ async function registrateToBackend(password, email, username,color) {
       body: body,
       mode:'cors'
     });
-
+   console.log(response)
    return response
 
   } catch (error) {

@@ -38,7 +38,7 @@ async function renderContactsToAssigned() {
     const contact = allContacts[i]["name"];
     document.getElementById("openedContacts").innerHTML += `
       <div class="oneContact" onclick="addContact(${i})">
-        <div act${i}">${contact}</div>
+      <div id="contact${i}">${contact}</div>
         <div class="contactButton" id="contactButton${i}"></div>
       </div>
       `;

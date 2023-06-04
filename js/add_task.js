@@ -35,9 +35,7 @@ async function loadTasks() {
     headers: {'Authorization': 'Token '+token},
     mode: 'cors'
   }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
-  all_tasks=all_tasksAsText['body'] || []
-  console.log(all_tasksAsText['body']);
-  
+  all_tasks=all_tasksAsText['body'] || [];
 }
 
 
@@ -47,8 +45,16 @@ async function loadTasks() {
  * @param {JSON} task - contains all informations for a task
  */
 async function saveAllTasks(task) {
+  token=sessionStorage.getItem('Token')
   all_tasks.push(task);
-  await backend.setItem('all_tasks', JSON.stringify(all_tasks));
+  body=JSON.stringify(task);
+  let response=await fetch('http://127.0.0.1:8000/tasks/',{
+        method: "POST",  
+        headers: { 'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json','Authorization': 'Token '+token},
+        body: body,
+        mode:'cors'
+      })
   loadTasks();
 }
 
@@ -272,12 +278,16 @@ function closeContacts() {
  */
 async function createTask() {
   addDate();
+  contactNameObj=[];
+  for (let i=0;i<selectedContactNames.length;i++){
+    contactNameObj.push({'name':selectedContactNames[i]})
+  }
   let task = {
     title: selectedTitle,
     description: selectedDescription,
     category: selectedCategory,
     color: selectedColor,
-    contactNames: selectedContactNames,
+    contactNames: contactNameObj,
     date: selectedDate,
     prio: selectedPrio,
     subtasks: selectedSubtasks,

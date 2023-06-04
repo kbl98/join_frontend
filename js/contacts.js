@@ -30,8 +30,12 @@ async function initContacts() {
 
 
 async function loadContactsFromBackend() {
-    await downloadFromServer();
-    loadedContacts = JSON.parse(backend.getItem("contacts"));
+    token=sessionStorage.getItem('Token')
+    allContactsAsText=await fetch('http://127.0.0.1:8000/contacts/',{
+    headers: {'Authorization': 'Token '+token},
+    mode: 'cors'
+    }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
+    loadedContacts=allContactsAsText['body']
     if (!loadedContacts) {
         loadedContacts = [];
     };
@@ -41,10 +45,17 @@ async function loadContactsFromBackend() {
 /**
  * save contact and load to backend
  */
-async function saveContactsToBackend() {
-    await downloadFromServer();
-    let contactAsText = JSON.stringify(loadedContacts);
-    await backend.setItem("contacts", contactAsText);
+async function saveContactsToBackend(object) {
+    token=sessionStorage.getItem('Token')
+    let contactAsText = JSON.stringify(object);
+    let response=await fetch('http://127.0.0.1:8000/contacts/',{
+        method: "POST",  
+        headers: { 'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json','Authorization': 'Token '+token},
+        body: contactAsText,
+        mode:'cors'
+      })
+   
 }
 
 
@@ -190,6 +201,7 @@ function openEditContact(contactName, contactMail, contactColor, contactPhone, b
 
 
 async function editContactSave(contactName, contactMail, contactPhone) {
+    let id=findId(contactName)
     let newName = document.getElementById('editContactNameValue').value;
     let newMail = document.getElementById('editContactMailValue').value;
     let newPhone = document.getElementById('editContactPhoneValue').value;
@@ -197,10 +209,30 @@ async function editContactSave(contactName, contactMail, contactPhone) {
     loadedContacts[index].name = newName;
     loadedContacts[index].email = newMail;
     loadedContacts[index].phone = newPhone;
-    await saveContactsToBackend();
+    token=sessionStorage.getItem('Token')
+    let body = JSON.stringify({
+        name:newName,
+        email:newMail,
+        phone:newPhone
+    });
+    let response=await fetch('http://127.0.0.1:8000/contacts/'+id+'/',{
+        method: "PATCH",  
+        headers: { 'Accept': 'application/json, text/plain, */*',
+        'Content-Type': 'application/json','Authorization': 'Token '+token},
+        body: body,
+        mode:'cors'
+      })
+   
     closeEditContact();
     closeDetail();
     initContacts();
+}
+
+function findId(name){
+   let contact=loadedContacts.find(c=>c.name==name);
+
+   let id=contact['id']
+   return id
 }
 
 
@@ -239,7 +271,7 @@ async function createNewContact() {
     let randomColor = getRandomColor();
     let newObjekt = { name: newName, email: newMail, phone: newPhone, color: randomColor };
     loadedContacts.push(newObjekt);
-    await saveContactsToBackend();
+    await saveContactsToBackend(newObjekt);
     closeNewContact();
     closeDetail();
     initContacts();

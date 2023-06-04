@@ -10,7 +10,6 @@ async function loadContacts() {
     mode: 'cors'
   }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
   allContacts=allContactsAsText['body'] || []
-  console.log(allContactsAsText['body']);
   sortAllContacts();
   getFirstLetters();
 }
@@ -36,7 +35,6 @@ function getFirstLetters() {
 function renderAllContacts() {
   for (let i = 0; i < allContacts.length; i++) {
     const contact = allContacts[i]["name"];
-    console.log(contact)
     document.getElementById("openedContacts").innerHTML += `
     <div class="oneContact" onclick="addContact(${i})">
       <div id="contact${i}">${contact}</div>

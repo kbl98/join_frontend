@@ -33,6 +33,7 @@ function resetUser() {
   current_user = [];
   current_user = [];
   localStorage.removeItem("current_user");
+  sessionStorage.removeItem("Token")
 }
 
 
@@ -43,7 +44,9 @@ function setUserImg() {
       .getElementById("real-img")
       .setAttribute("src", current_user["img"]);
   } else {
-    document.getElementById("real-img").classList.add("d-none");
+    if( document.getElementById("real-img")){
+      document.getElementById("real-img").classList.add("d-none")
+      };
     let user_img = document.getElementById("user-img");
     user_img.style.backgroundColor=current_user["color"];
     user_img.innerHTML = createUserPic();

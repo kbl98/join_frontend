@@ -35,8 +35,7 @@ function dragStart(id) {
 async function drop(progress) {
     loadedBoard[currentDragElement]['progress'] = progress;
     renderBoard();
-    console.log(currentDragElement)
-    await boardSaveToBackend(currentDragElement)
+    await boardSaveToBackend(currentDragElement);
 }
 
 
@@ -48,17 +47,17 @@ function allowDrop(ev) {
 
 // load and upload to backend
 async function boardSaveToBackend(index) {
+    token=sessionStorage.getItem('Token')
     let id=findId(index);
-    console.log(loadedBoard[index])
-    body=JSON.stringify(loadedBoard[index])
+    body=JSON.stringify(loadedBoard[index]);
     let saveResponse=await fetch('http://127.0.0.1:8000/tasks/'+id+'/',{
         method: "PATCH",  
         headers: { 'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json'},
+        'Content-Type': 'application/json','Authorization': 'Token '+token},
         body: body,
         mode:'cors'
       })
-    console.log(saveResponse.json())
+   
     //await downloadFromServer();
     //let JSONAsText = JSON.stringify(loadedBoard);
     //await backend.setItem("all_tasks", JSONAsText);
@@ -72,7 +71,6 @@ async function loadAllTaskFromBackend() {
     mode: 'cors'
   }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
   loadedBoard=all_tasksAsText['body']
-  console.log(all_tasksAsText['body']);
     if (!loadedBoard) {
         loadedBoard = [];
     };
@@ -85,8 +83,7 @@ async function loadContactsFromBackend() {
     headers: {'Authorization': 'Token '+token},
     mode: 'cors'
     }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
-    loadedContacts=allContactsAsText['body']
-    console.log(allContactsAsText['body']);
+    loadedContacts=allContactsAsText['body'];
     if (!loadedContacts) {
         loadedContacts = [];
     };
@@ -303,16 +300,14 @@ async function editPopupTask(title, description, date, index) {
  */
 async function saveEditPopupBoard(index) {
     let { titleValue, descriptionValue, dateValue, prioValue, assignedToValue } = getnewValuesFromEdit();
-    console.log(index)
-    let id=findId(index)
-    console.log(id)
+    let id=findId(index);
     let contactnames={};
     for (let i=0;i<assignedToValue.length;i++){
         contactnames[i]={'name':assignedToValue[i]}
     }
     let dateArray=dateValue.split("/");
     dateValue=dateArray[2]+"-"+dateArray[1]+"-"+dateArray[0];
-    
+    token=sessionStorage.getItem('Token')
     let body=JSON.stringify({
         'title':titleValue,
         'description':descriptionValue,
@@ -320,21 +315,18 @@ async function saveEditPopupBoard(index) {
         'date':dateValue,
         'prio':prioValue
     })
-    console.log(body)
     let saveResponse=await fetch('http://127.0.0.1:8000/tasks/'+id+'/',{
         method: "PATCH",  
         headers: { 'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json'},
+        'Content-Type': 'application/json','Authorization': 'Token '+token},
         body: body,
         mode:'cors'
       })
-    console.log(saveResponse.json())
     closeEditedTask();
     initBoard();
 }
 
 function findId(index){
-    console.log(loadedBoard)
    let id=loadedBoard[index]['id']
    return id
 }
@@ -388,10 +380,8 @@ function closeAddTaskBoard() {
  */
 function addContactLoop(index) {
     let contacts = loadedBoard[index]['contactNames'];
-    console.log(contacts)
     for (let i = 0; i < contacts.length; i++) {
         let contact = loadedBoard[index]['contactNames'][i]['name'];
-        console.log(contact)
         let contactId = getContactId(contact);
         addContactBoard(contactId);
     }
@@ -404,9 +394,7 @@ function addContactLoop(index) {
  * @param {number} i - number to get the correct contact
  */
 function addContactBoard(i) {
-    console.log(i)
     let contactID = document.getElementById('contact' + i);
-    console.log(selectedContactNames)
     let index = selectedContactNames.indexOf(contactID.innerHTML);
     let index2 = selectedLetters.findIndex(obj => obj.bothLetters == firstLetters[i]['bothLetters']);
     if (index > -1) {
@@ -436,14 +424,10 @@ function resetSelectBoard(index, index2, i) {
 
 function getContactId(contact) {
     let contactId;
-   console.log(allContacts)
     for (let i = 0; i < allContacts.length; i++) {
         let currentContact = allContacts[i]['name'];
-        console.log(currentContact)
-        console.log(contact)
         if (currentContact==contact) {
             contactId = i
-            console.log(i)
             break;
         }
     }
@@ -523,9 +507,7 @@ async function createTaskBoard(param) {
     for (let i=0;i<selectedContactNames.length;i++){
         contacts.push({'name':selectedContactNames[i]})
     }
-    console.log(selectedSubtasks)
     for (let i=0;i<selectedSubtasks.length;i++){
-        console.log(selectedSubtasks[i])
         subtasks.push({'name':selectedSubtasks[i]['name']})
     }
     let dateArray=selectedDate.split("/");
@@ -541,18 +523,15 @@ async function createTaskBoard(param) {
         subtasks: subtasks,
         progress: param
     };
-    console.log(jsonObj)
+    token=sessionStorage.getItem('Token')
     body=JSON.stringify(jsonObj);
     let response=await fetch('http://127.0.0.1:8000/tasks/',{
         method: "POST",  
         headers: { 'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json'},
+        'Content-Type': 'application/json','Authorization': 'Token '+token},
         body: body,
         mode:'cors'
       })
-    console.log(response)
-    //Neue Task!!
-    //await boardSaveToBackend(all_tasks.length);
     clearTask();
     closeAddTaskBoard();
     showDivWithTransition();
@@ -652,7 +631,6 @@ function getListAssignedto(task){
 
 
 function splitName(fullName) {
-    console.log(fullName)
     let nameParts = fullName.split(" ");
     let firstName = nameParts[0];
     let lastName = nameParts[nameParts.length - 1];
@@ -776,16 +754,14 @@ function openTaskAssignedToTemp(contact, bothFirstLetters, nameColor) {
  */
 
 async function deleteTask() {
-    console.log(currentDragElement)
+    token=sessionStorage.getItem('Token')
     id=findId(currentDragElement);
     let saveResponse=await fetch('http://127.0.0.1:8000/tasks/'+id+'/',{
         method: "DELETE",  
         headers: { 'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json'},
+        'Content-Type': 'application/json','Authorization': 'Token '+token},
         mode:'cors'
       })
-    console.log(saveResponse)
-    //loadedBoard.splice(currentDragElement, 1);
     loadedBoard.splice(currentDragElement, 1);
     renderBoard();
     
@@ -796,9 +772,7 @@ async function deleteTask() {
 /**function calculate subtasks */
 
 function showProgressSubtasks(task,index){
-    console.log(task["subtasks"])
     let number_subtasks=task["subtasks"].length;
-    console.log(number_subtasks)
     if(number_subtasks>0){
     let array_done_subt=task["subtasks"].filter((s)=>s["state"]=="done");
     let numb_done=array_done_subt.length;
