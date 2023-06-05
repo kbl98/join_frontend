@@ -26,17 +26,7 @@ function getLocalCurrentUser() {
 }
 
 
-/**
- * function to load all tasks which are saved on the server
- */
-async function loadTasks() {
-  token=sessionStorage.getItem('Token')
-    all_tasksAsText=await fetch('http://127.0.0.1:8000/tasks/',{
-    headers: {'Authorization': 'Token '+token},
-    mode: 'cors'
-  }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
-  all_tasks=all_tasksAsText['body'] || [];
-}
+
 
 
 /**
@@ -45,19 +35,11 @@ async function loadTasks() {
  * @param {JSON} task - contains all informations for a task
  */
 async function saveAllTasks(task) {
-  token=sessionStorage.getItem('Token')
-  all_tasks.push(task);
-  console.log(task)
-  body=JSON.stringify(task);
-  let response=await fetch('http://127.0.0.1:8000/tasks/',{
-        method: "POST",  
-        headers: { 'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json','Authorization': 'Token '+token},
-        body: body,
-        mode:'cors'
-      })
-  loadTasks();
+  await taskSave(task)
+  await loadTasks();
 }
+
+
 
 
 //Title

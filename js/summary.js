@@ -10,13 +10,7 @@ let token;
 
 /**function that fetches tasks from backend and creates a Json */
 async function initSum() {
-  token=sessionStorage.getItem('Token')
-  await includeHTML();
-  all_tasksAsText=await fetch('http://127.0.0.1:8000/tasks',{
-    headers: {'Authorization': 'Token '+token},
-    mode: 'cors'
-  }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
-  all_tasks=all_tasksAsText['body']
+  await getAllTasksFromBackend()
   if (!all_tasks) {
     all_tasks = [];
   } else {
@@ -28,6 +22,7 @@ async function initSum() {
   renderSummary();
   storeSession();
 }
+
 
 
 function storeSession(){
@@ -342,6 +337,7 @@ async function getCurrentUserFromStorage() {
     window.location.href = "login.html";
   } else {
     current_user = JSON.parse(currentUserAsText);
+    console.log(current_user)
   }
 }
 

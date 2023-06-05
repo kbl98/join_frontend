@@ -41,14 +41,6 @@ async function getLogin() {
 }
 
 
-/**
- * funtion to set Location of Storage 
- */
-async function setBackend() {
-  setURL(
-    'https://kbl98.pythonanywhere.com/register/'
-  );
-}
 
 
 /**
@@ -92,13 +84,14 @@ async function getCurrentUser() {
   let password = document.getElementById("password-login").value;
   let response=await checkLoginBackend(email,password);
   let json=await response.json();
+  if(json.token){
   sessionStorage.setItem("Token",json.token);
   current_user={
     username: json.username,
     email: json.email,
     color:json.color
-  }
-  if (!current_user) {
+  }}
+  if (!json.token) {
     tryOneMore();
   } else {
     removeTrys();
@@ -109,20 +102,7 @@ async function getCurrentUser() {
   }
 }
 
-async function checkLoginBackend(email,password){
-  let body=JSON.stringify({
-    'email':email,
-    'password':password
-  })
-  let response=await fetch('http://127.0.0.1:8000/login/', {
-    method: "POST",  
-    headers: { 'Accept': 'application/json, text/plain, */*',
-    'Content-Type': 'application/json'},
-    body: body,
-    mode:'cors'
-  });
-  return response
-}
+
 
 /**function to reset value of loginfields */
 function resetLogin(){
@@ -221,35 +201,7 @@ async function sign() {
   }*/
 }
 
-async function registrateToBackend(password, email, username,color) {
-  const url = "https://kbl98.pythonanywhere.com/register/";
-  const headers = {
-    "Content-Type": "application/json"
-  };
 
-  const body = JSON.stringify({
-    password: password,
-    email: email,
-    username: username,
-    color:color
-  });
-  try {
-    
-   
-  let response = await fetch(" http://127.0.0.1:8000/register/", {
-      method: "POST",  
-      headers: { 'Accept': 'application/json, text/plain, */*',
-      'Content-Type': 'application/json',},
-      body: body,
-      mode:'cors'
-    });
-   console.log(response)
-   return response
-
-  } catch (error) {
-    console.error(error);
-  }
-}
 
 
 function cleanValue(username,email,password){
@@ -406,7 +358,7 @@ function openPopup() {
 }
 
 
-function openPopupMail() {
+async function openPopupMail() {
   let currentmail = document.getElementById("mail-registration").value;
   current_user = users.find((u) => u.email == currentmail);
   if (!current_user) {

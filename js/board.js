@@ -44,49 +44,10 @@ function allowDrop(ev) {
 // -----
 
 
-// load and upload to backend
-async function boardSaveToBackend(index) {
-    token=sessionStorage.getItem('Token')
-    let id=findId(index);
-    body=JSON.stringify(loadedBoard[index]);
-    let saveResponse=await fetch('http://127.0.0.1:8000/tasks/'+id+'/',{
-        method: "PATCH",  
-        headers: { 'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json','Authorization': 'Token '+token},
-        body: body,
-        mode:'cors'
-      })
-   
-    //await downloadFromServer();
-    //let JSONAsText = JSON.stringify(loadedBoard);
-    //await backend.setItem("all_tasks", JSONAsText);
-}
 
 
-async function loadAllTaskFromBackend() {
-    token=sessionStorage.getItem('Token')
-    all_tasksAsText=await fetch('http://127.0.0.1:8000/tasks/',{
-    headers: {'Authorization': 'Token '+token},
-    mode: 'cors'
-  }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
-  loadedBoard=all_tasksAsText['body']
-    if (!loadedBoard) {
-        loadedBoard = [];
-    };
-}
 
 
-async function loadContactsFromBackend() {
-    token=sessionStorage.getItem('Token')
-    allContactsAsText=await fetch('http://127.0.0.1:8000/contacts/',{
-    headers: {'Authorization': 'Token '+token},
-    mode: 'cors'
-    }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
-    loadedContacts=allContactsAsText['body'];
-    if (!loadedContacts) {
-        loadedContacts = [];
-    };
-}
 // -----
 
 
@@ -314,16 +275,12 @@ async function saveEditPopupBoard(index) {
         'date':dateValue,
         'prio':prioValue
     })
-    let saveResponse=await fetch('http://127.0.0.1:8000/tasks/'+id+'/',{
-        method: "PATCH",  
-        headers: { 'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json','Authorization': 'Token '+token},
-        body: body,
-        mode:'cors'
-      })
+    await patchTask(id,body,token)
     closeEditedTask();
     initBoard();
 }
+
+
 
 function findId(index){
    let id=loadedBoard[index]['id']
@@ -523,18 +480,14 @@ async function createTaskBoard(param) {
     };
     token=sessionStorage.getItem('Token')
     body=JSON.stringify(jsonObj);
-    let response=await fetch('http://127.0.0.1:8000/tasks/',{
-        method: "POST",  
-        headers: { 'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json','Authorization': 'Token '+token},
-        body: body,
-        mode:'cors'
-      })
+    await newTaskBackend(body,token)
     clearTask();
     closeAddTaskBoard();
     showDivWithTransition();
     initBoard();
 }
+
+
 
 
 function showDivWithTransition() {
@@ -754,17 +707,12 @@ function openTaskAssignedToTemp(contact, bothFirstLetters, nameColor) {
 async function deleteTask() {
     token=sessionStorage.getItem('Token')
     id=findId(currentDragElement);
-    let saveResponse=await fetch('http://127.0.0.1:8000/tasks/'+id+'/',{
-        method: "DELETE",  
-        headers: { 'Accept': 'application/json, text/plain, */*',
-        'Content-Type': 'application/json','Authorization': 'Token '+token},
-        mode:'cors'
-      })
+    await taskDelete(token,id)
     loadedBoard.splice(currentDragElement, 1);
     renderBoard();
-    
-    
 }
+
+
 
 
 /**function calculate subtasks */

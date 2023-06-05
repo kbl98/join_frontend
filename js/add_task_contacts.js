@@ -4,15 +4,15 @@ let firstLetters = [];
 let selectedLetters = [];
 
 async function loadContacts() {
-  token=sessionStorage.getItem('Token')
-    allContactsAsText=await fetch('http://127.0.0.1:8000/contacts/',{
-    headers: {'Authorization': 'Token '+token},
-    mode: 'cors'
-  }).then(r =>  r.json().then(data => ({status: r.status, body: data})))
-  allContacts=allContactsAsText['body'] || []
+  await getContacts()
   sortAllContacts();
   getFirstLetters();
 }
+
+
+
+
+
 
 function sortAllContacts() {
   allContacts = allContacts.sort((a, b) => {
