@@ -9,6 +9,7 @@ async function initBoard() {
     await loadContactsFromBackend();
     await getCurrentUserFromStorage();
     await loadTasks();
+    console.log(loadedBoard)
     await loadContacts();
     renderBoard();
     setUserImgTest();

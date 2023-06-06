@@ -191,11 +191,18 @@ async function registrateToBackend(password, email, username, color) {
 }
 
 async function getAllTasksFromBackend() {
-  token = sessionStorage.getItem("Token");
-  await includeHTML();
-  all_tasksAsText = await fetch(url + "tasks", {
-    headers: { Authorization: "Token " + token },
-    mode: "cors",
-  }).then((r) => r.json().then((data) => ({ status: r.status, body: data })));
-  all_tasks = all_tasksAsText["body"];
-}
+    
+        token = sessionStorage.getItem("Token");
+        all_tasksAsText = await fetch(url + "tasks/", {
+          headers: { Authorization: "Token " + token },
+          mode: "cors",
+        }).then((r) => r.json().then((data) => ({ status: r.status, body: data })));
+        all_tasks = all_tasksAsText["body"];
+        if (!all_tasks) {
+          all_tasks = [];
+        }
+        return all_tasks
+      
+  }
+  
+    

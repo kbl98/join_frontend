@@ -1,19 +1,18 @@
 let urgent_tasks = [];
-let mediaQuery = window.matchMedia('(max-width: 800px)');
+let mediaQuery = window.matchMedia("(max-width: 800px)");
 let token;
-
+let loadedBoard;
 
 /**
  * functions for getting Items from server and include templates from here
  */
 
-
 /**function that fetches tasks from backend and creates a Json */
 async function initSum() {
-  await getAllTasksFromBackend()
-  if (!all_tasks) {
-    all_tasks = [];
-  } else {
+  await includeHTML();
+  all_tasks = await getAllTasksFromBackend();
+
+  if (all_tasks != []) {
     formateDate(all_tasks);
   }
   await getCurrentUserFromStorage();
@@ -23,12 +22,9 @@ async function initSum() {
   storeSession();
 }
 
-
-
-function storeSession(){
-  sessionStorage.setItem("session",true)
+function storeSession() {
+  sessionStorage.setItem("session", true);
 }
-
 
 /**function to include the template */
 async function includeHTML() {
@@ -44,7 +40,6 @@ async function includeHTML() {
     }
   }
 }
-
 
 /**
  * functions to render task properties from here
@@ -72,13 +67,11 @@ function renderSummary() {
   greetCurrentUser();
 }
 
-
 /**function to count all tasks on board */
 function countTasksOnBoard() {
   let onBoard = all_tasks.length;
   return onBoard;
 }
-
 
 /**function to find urgent tasks */
 function getAllUrgentTasks() {
@@ -89,7 +82,6 @@ function getAllUrgentTasks() {
   }
   sortAllUrgentTasks();
 }
-
 
 /**function to count tasks that are in process */
 function countTasksInProcess() {
@@ -102,7 +94,6 @@ function countTasksInProcess() {
   return in_process;
 }
 
-
 /**function to count tasks that are awaiting feedback */
 function countTasksAwaitingFeedback() {
   let awaiting_feedback = 0;
@@ -113,7 +104,6 @@ function countTasksAwaitingFeedback() {
   }
   return awaiting_feedback;
 }
-
 
 /**function to count tasks that are done */
 function countTasksDone() {
@@ -126,7 +116,6 @@ function countTasksDone() {
   return done;
 }
 
-
 /**function to count tasks that are done */
 function countTasksTodo() {
   let todo = 0;
@@ -138,7 +127,6 @@ function countTasksTodo() {
   return todo;
 }
 
-
 /**
  * functions for creating urgent tasks from here
  */
@@ -147,41 +135,41 @@ function countTasksTodo() {
 function createUrgentBox() {
   let urgenttasks_container = document.getElementById("deadline-container-box");
   urgenttasks_container.innerHTML = "";
-  if(urgent_tasks.length==0){
+  if (urgent_tasks.length == 0) {
     urgenttasks_container.innerHTML = generateUrgentNullHTML();
-  }else{
-  for (let i = 0; i < urgent_tasks.length; i++) {
-    let isOver=compareIfOver(urgent_tasks[i]["date"]);
-    if(!isOver){
-    let taskdate = constructDate(urgent_tasks[i]["date"]);
-    urgenttasks_container.innerHTML += generateUrgentHTML(i, taskdate);
-    break
+  } else {
+    for (let i = 0; i < urgent_tasks.length; i++) {
+      let isOver = compareIfOver(urgent_tasks[i]["date"]);
+      if (!isOver) {
+        let taskdate = constructDate(urgent_tasks[i]["date"]);
+        urgenttasks_container.innerHTML += generateUrgentHTML(i, taskdate);
+        break;
+      }
     }
   }
 }
-}
-
 
 /**function to render all urgent tasks on summary*/
 function createDeadlineBox() {
   let urgenttasks_container = document.getElementById("deadline-container-box");
   urgenttasks_container.innerHTML = "";
-  if(all_tasks.length==0){
+  if (all_tasks.length == 0) {
     urgenttasks_container.innerHTML = generateUrgentNullHTML();
-  }else{
-  for (let i = 0; i < all_tasks.length; i++) {
-    let isOver=compareIfOver(all_tasks[i]["date"]);
-    if(!isOver){
-    let taskdate = constructDate(all_tasks[i]["date"]);
-    urgenttasks_container.innerHTML += generateUrgentHTML(i, taskdate);
-    break
+  } else {
+    for (let i = 0; i < all_tasks.length; i++) {
+      console.log(all_tasks);
+      let isOver = compareIfOver(all_tasks[i]["date"]);
+      if (!isOver) {
+        let taskdate = constructDate(all_tasks[i]["date"]);
+        urgenttasks_container.innerHTML += generateUrgentHTML(i, taskdate);
+        break;
+      }
+    }
+    if (urgenttasks_container.innerHTML == "") {
+      urgenttasks_container.innerHTML = generateUrgentOverHTML();
     }
   }
-  if(urgenttasks_container.innerHTML==""){
-    urgenttasks_container.innerHTML = generateUrgentOverHTML();
-  }
-}}
-
+}
 
 /**function to sort the tasks referring to their date */
 function sortAllUrgentTasks() {
@@ -197,7 +185,6 @@ function sortAllUrgentTasks() {
   urgent_tasks = urgentSorted;
 }
 
-
 /**function to sort the tasks referring to their date */
 function sortAllTasks() {
   let dates = [];
@@ -209,24 +196,22 @@ function sortAllTasks() {
   for (let i = 0; i < dates.length; i++) {
     tasksSorted.push(all_tasks.find((t) => t["date"] == dates[i]));
   }
- all_tasks = tasksSorted;
+  all_tasks = tasksSorted;
 }
-
 
 /**
  * function to check if urgent task is already over
  * @param {date} date -Parameter is date to be checked against actual time
  * @returns {boolean}-Returns true if date is over
-  */
-function compareIfOver(date){
-  let isOver=false;
-  let today=new Date();
-  if ((date.getTime()-today.getTime())<0 ){
-   isOver=true;
+ */
+function compareIfOver(date) {
+  let isOver = false;
+  let today = new Date();
+  if (date.getTime() - today.getTime() < 0) {
+    isOver = true;
   }
   return isOver;
 }
-
 
 /**function that writes HTML for rendering one urgent Task on summary */
 function generateUrgentHTML(i, taskdate) {
@@ -236,26 +221,23 @@ function generateUrgentHTML(i, taskdate) {
 </div>`;
 }
 
-function generateUrgentNullHTML(){
+function generateUrgentNullHTML() {
   return `<div class="deadline-container" onclick="getToBoard()">
   <span class="deadline"></span>
   <p><b>No upcoming Deadline</b></p>
 </div>`;
 }
 
-
-function generateUrgentOverHTML(){
+function generateUrgentOverHTML() {
   return `<div class="deadline-container" onclick="getToBoard()">
   <span class="deadline"></span>
   <p><b>Upcoming Deadline over</b></p>
 </div>`;
 }
 
-
 /**
  * functions for date formate from here
  */
-
 
 /**
  * function to formate the taskdate to regular form
@@ -264,14 +246,13 @@ function generateUrgentOverHTML(){
 function formateDate(tasks) {
   for (let i = 0; i < all_tasks.length; i++) {
     let [ye, mo, day] = tasks[i]["date"].split("-");
-    let d = new Date(+ye, +mo-1, +day);
+    let d = new Date(+ye, +mo - 1, +day);
     tasks[i]["date"] = d;
   }
 }
 
-
 /**
- * function to compare  two dates 
+ * function to compare  two dates
  * @param {date} date1 - first date in row
  * @param {date} date2 -second date in row
  * @returns {number}-positiv oder negativ number
@@ -280,7 +261,6 @@ function compareDate(date1, date2) {
   return date1.getTime() - date2.getTime();
 }
 
-
 /**
  * function to get the output-formate of the dates that are rendered on summary
  * @param {date} date -Parameter is a date
@@ -288,7 +268,10 @@ function compareDate(date1, date2) {
  */
 function constructDate(date) {
   let weekday = date.getDay();
-  let time=date.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric' });
+  let time = date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "numeric",
+  });
   let m = [
     "January",
     "February",
@@ -324,11 +307,9 @@ function constructDate(date) {
   return taskdate;
 }
 
-
 /**
  * functions for user-greeting from here
  */
-
 
 /**function to get the user, who is logged in */
 async function getCurrentUserFromStorage() {
@@ -337,10 +318,9 @@ async function getCurrentUserFromStorage() {
     window.location.href = "login.html";
   } else {
     current_user = JSON.parse(currentUserAsText);
-    console.log(current_user)
+    console.log(current_user);
   }
 }
-
 
 /**function that fix the greeting according time of day */
 function getPartOfDay() {
@@ -349,16 +329,13 @@ function getPartOfDay() {
   let time = date.getHours();
   if (time < 11 && time > 0) {
     greet = "Good Morning,";
-  }
-  else if (time >= 11 && time < 17) {
+  } else if (time >= 11 && time < 17) {
     greet = "Hello,";
-  } 
-  else {
+  } else {
     greet = "Good Evening,";
   }
   return greet;
 }
-
 
 /**function to set the logged user name on summary-greeting */
 function greetCurrentUser() {
@@ -368,17 +345,14 @@ function greetCurrentUser() {
   greetname.innerHTML = current_user["username"];
 }
 
-
 /**
  * common functions from here
  */
-
 
 /**function to get on to Board-Window */
 function getToBoard() {
   window.location.href = "board.html";
 }
-
 
 /**functions to change the attribute (img) on hovering the done/todo containers on summary */
 
@@ -391,7 +365,6 @@ function hover(id, src) {
   document.getElementById(id).setAttribute("src", src);
 }
 
-
 /**
  * function to change img-src on unhover
  * @param {string} id -Parameter is id of img where source changes
@@ -401,143 +374,137 @@ function unhover(id, src) {
   document.getElementById(id).setAttribute("src", src);
 }
 
-
 /**
- * functions for greet on media query 
-*/
+ * functions for greet on media query
+ */
 
-function showGreet(){
-  let greetcontainer=document.getElementById("greet-container");
+function showGreet() {
+  let greetcontainer = document.getElementById("greet-container");
   greetcontainer.classList.remove("d-none");
 }
 
-
-function closeGreetOnMobil(){
-  let greetcontainer=document.getElementById("greet-container");
+function closeGreetOnMobil() {
+  let greetcontainer = document.getElementById("greet-container");
   greetcontainer.classList.add("d-none");
 }
 
-
-function timeGreet(){
-  setTimeout(showGreetOnMobil,2000)
+function timeGreet() {
+  setTimeout(showGreetOnMobil, 2000);
 }
 
-
-async function handleMediaSize(){
-  let session=sessionStorage.getItem("session");
-  if (window.innerWidth < 1100){
-    if(!session){
-  setTimeout(resizeElements,2000)
+async function handleMediaSize() {
+  let session = sessionStorage.getItem("session");
+  if (window.innerWidth < 1100) {
+    if (!session) {
+      setTimeout(resizeElements, 2000);
+    } else {
+      closeGreetOnMobil();
+      resizeElements();
     }
-  else{
-    closeGreetOnMobil();
-    resizeElements()
-    }
-  }
-  else{
-    showGreet()
+  } else {
+    showGreet();
   }
 }
 
-
-function resizeElements(){
-  let greetcontainer=document.getElementById("greet-container");
-  if(greetcontainer.classList.contains("d-none") && window.innerWidth>1100){
-      greetcontainer.classList.remove("d-none")
-    }
-    if(!greetcontainer.classList.contains("d-none") && window.innerWidth<=1100){
-      greetcontainer.classList.add("d-none")
+function resizeElements() {
+  let greetcontainer = document.getElementById("greet-container");
+  if (greetcontainer.classList.contains("d-none") && window.innerWidth > 1100) {
+    greetcontainer.classList.remove("d-none");
+  }
+  if (
+    !greetcontainer.classList.contains("d-none") &&
+    window.innerWidth <= 1100
+  ) {
+    greetcontainer.classList.add("d-none");
   }
 }
 
 /**functions for chat-pop */
 
-function raise(){
+function raise() {
   document.getElementById("popmessage").classList.remove("small");
   document.getElementById("popmessage").classList.add("big");
 }
 
-
-function toSmall(){
+function toSmall() {
   document.getElementById("popmessage").classList.add("small");
   document.getElementById("popmessage").classList.remove("big");
 }
 
 /**functions for container-move in js */
 
-function moveVertical(classn){
-  let todos=document.getElementsByClassName(classn);
-  for (let i=0;i<todos.length;i++){
+function moveVertical(classn) {
+  let todos = document.getElementsByClassName(classn);
+  for (let i = 0; i < todos.length; i++) {
     todos[i].classList.add("verticaldown");
-}
-}
-
-function removeVertical(classn){
-  let todos=document.getElementsByClassName(classn);
-  for (let i=0;i<todos.length;i++){
-  todos[i].classList.remove("verticaldown");
-}
+  }
 }
 
-function moveVertivalup(classn){
-  let todos=document.getElementsByClassName(classn);
-  for (let i=0;i<todos.length;i++){
+function removeVertical(classn) {
+  let todos = document.getElementsByClassName(classn);
+  for (let i = 0; i < todos.length; i++) {
+    todos[i].classList.remove("verticaldown");
+  }
+}
+
+function moveVertivalup(classn) {
+  let todos = document.getElementsByClassName(classn);
+  for (let i = 0; i < todos.length; i++) {
     todos[i].classList.add("verticalup");
-}
+  }
 }
 
-function removeVertivalup(classn){
-  let todos=document.getElementsByClassName(classn);
-  for (let i=0;i<todos.length;i++){
+function removeVertivalup(classn) {
+  let todos = document.getElementsByClassName(classn);
+  for (let i = 0; i < todos.length; i++) {
     todos[i].classList.remove("verticalup");
-}
+  }
 }
 
-function moveHorizLeft(classn){
-  let todos=document.getElementsByClassName(classn);
-  for (let i=0;i<todos.length;i++){
+function moveHorizLeft(classn) {
+  let todos = document.getElementsByClassName(classn);
+  for (let i = 0; i < todos.length; i++) {
     todos[i].classList.add("horizonleft");
-}
+  }
 }
 
-function removeHorizLeft(classn){
-  let todos=document.getElementsByClassName(classn);
-  for (let i=0;i<todos.length;i++){
+function removeHorizLeft(classn) {
+  let todos = document.getElementsByClassName(classn);
+  for (let i = 0; i < todos.length; i++) {
     todos[i].classList.remove("horizonleft");
-}
+  }
 }
 
-function moveHorizonRight(classn){
-  let todos=document.getElementsByClassName(classn);
-  for (let i=0;i<todos.length;i++){
+function moveHorizonRight(classn) {
+  let todos = document.getElementsByClassName(classn);
+  for (let i = 0; i < todos.length; i++) {
     todos[i].classList.add("horizonright");
-}
+  }
 }
 
-function removeHorizonRight(classn){
-  let todos=document.getElementsByClassName(classn);
-  for (let i=0;i<todos.length;i++){
+function removeHorizonRight(classn) {
+  let todos = document.getElementsByClassName(classn);
+  for (let i = 0; i < todos.length; i++) {
     todos[i].classList.remove("horizonright");
-}
+  }
 }
 
-function hoverProgress(){
+function hoverProgress() {
   moveVertical("important-container");
   moveVertical("todo");
 }
 
-function unhoverProgress(){
+function unhoverProgress() {
   removeVertical("important-container");
   removeVertical("todo");
 }
 
-
-function hoverImportant(){
+function hoverImportant() {
   moveVertivalup("progress");
   moveVertical("todo");
 }
 
-function unhoverImportant(){
+function unhoverImportant() {
   removeVertivalup("progress");
   removeVertical("todo");
 }
